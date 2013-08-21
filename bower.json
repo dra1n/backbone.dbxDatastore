@@ -1,0 +1,8 @@
+{
+  "name": "backbone.dbxDatastore",
+  "description": "Dropbox Datastore adapter for Backbone.js",
+  "main": "dist/backbone.dbxDatastore.js",
+  "version": "0.0.0",
+  "dependencies": {}
+}
+

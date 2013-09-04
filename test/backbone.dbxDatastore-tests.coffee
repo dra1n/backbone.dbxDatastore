@@ -1,7 +1,7 @@
 chai = require 'chai'
 sinon = require 'sinon'
 
-{Backbonedbxdatastore} = require '../src/backbone.dbxDatastore'
+{DbxDatastore} = require '../src/backbone.dbxDatastore'
 
 chai.should()
 

@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "dependencies": {},
   "devDependencies" : {
+    "backbone" : "*",
+    "dropbox" : "*",
     "mocha" : "*",
     "chai" : "*",
     "sinon" : "*",

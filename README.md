@@ -33,7 +33,7 @@ if (client.isAuthenticated()) {
       }
 
       // Now you have a datastore. Save it
-      Backbone.dbxDatastore.datastore = datastore;
+      Backbone.DbxDatastore.datastore = datastore;
   });
 }
 ```

@@ -54,7 +54,7 @@ window.SomeCollection = Backbone.Collection.extend({
 Add dependency to bower.json
 
 ```
-"backbone.dbxDatastore": "~0.1.0"
+"backbone.dbxDatastore": "~0.2.0"
 ```
 
 Include [RequireJS](http://requirejs.org):

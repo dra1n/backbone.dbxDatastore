@@ -17,38 +17,53 @@
     Backbone.DbxDatastore = (function() {
       function DbxDatastore(tableName) {
         this.tableName = tableName;
+        this.datastoreDfr = Backbone.DbxDatastore.datastore;
       }
 
       DbxDatastore.prototype.create = function(model) {
-        var record;
-        record = this._getTable().insert(model.toJSON());
-        model.id = record.getId();
-        model.set(model.idAttribute, model.id);
-        return this.find(model);
+        var _this = this;
+        return this._withDatastore(function(datastore) {
+          var record;
+          record = _this._getTable(datastore).insert(model.toJSON());
+          model.id = record.getId();
+          model.set(model.idAttribute, model.id);
+          return _this.jsonData(_this._getRecord(datastore, model));
+        });
       };
 
       DbxDatastore.prototype.update = function(model) {
-        this._getRecord(model).update(model.toJSON());
-        return this.find(model);
+        var _this = this;
+        return this._withDatastore(function(datastore) {
+          _this._getRecord(datastore, model).update(model.toJSON());
+          return _this.jsonData(_this._getRecord(datastore, model));
+        });
       };
 
       DbxDatastore.prototype.find = function(model) {
-        return this.jsonData(this._getRecord(model));
+        var _this = this;
+        return this._withDatastore(function(datastore) {
+          return _this.jsonData(_this._getRecord(datastore, model));
+        });
       };
 
       DbxDatastore.prototype.findAll = function() {
         var _this = this;
-        return _(this._getTable().query()).map(function(r) {
-          return _this.jsonData(r);
+        return this._withDatastore(function(datastore) {
+          return _(_this._getTable(datastore).query()).map(function(r) {
+            return _this.jsonData(r);
+          });
         });
       };
 
       DbxDatastore.prototype.destroy = function(model) {
+        var _this = this;
         if (model.isNew()) {
           return false;
         }
-        this._getRecord(model).deleteRecord();
-        return model;
+        return this._withDatastore(function(datastore) {
+          _this._getRecord(datastore, model).deleteRecord();
+          return model;
+        });
       };
 
       DbxDatastore.prototype.jsonData = function(record) {
@@ -60,17 +75,20 @@
         return data;
       };
 
-      DbxDatastore.prototype._getRecord = function(model) {
-        return this._getTable().get(model.id);
+      DbxDatastore.prototype._withDatastore = function(action) {
+        return this.datastoreDfr.then(action);
       };
 
-      DbxDatastore.prototype._getTable = function() {
-        return this._table || (this._table = Backbone.DbxDatastore.datastore.getTable(this.tableName));
+      DbxDatastore.prototype._getRecord = function(datastore, model) {
+        return this._getTable(datastore).get(model.id);
+      };
+
+      DbxDatastore.prototype._getTable = function(datastore) {
+        return this._table || (this._table = datastore.getTable(this.tableName));
       };
 
       DbxDatastore.sync = function(method, model, options) {
-        var datastore, error, errorMessage, resp, store, syncDfd;
-        datastore = Backbone.DbxDatastore.datastore;
+        var error, errorMessage, resp, store, syncDfd;
         store = model.dbxDatastore || model.collection.DbxDatastore;
         syncDfd = Backbone.$.Deferred && Backbone.$.Deferred();
         try {
@@ -91,18 +109,19 @@
           error = _error;
           errorMessage = error.message;
         }
-        if (resp != null) {
+        resp.done(function(result) {
           if ((options != null ? options.success : void 0)) {
             if (Backbone.VERSION === '0.9.10') {
-              options.success(model, resp, options);
+              options.success(model, result, options);
             } else {
-              options.success(resp);
+              options.success(result);
             }
           }
           if (syncDfd != null) {
-            syncDfd.resolve(resp);
+            return syncDfd.resolve(result);
           }
-        } else {
+        });
+        resp.fail(function() {
           errorMessage = errorMessage != null ? errorMessage : 'Record Not Found';
           if (options != null ? options.error : void 0) {
             if (Backbone.VERSION === '0.9.10') {
@@ -112,16 +131,18 @@
             }
           }
           if (syncDfd != null) {
-            syncDfd.reject(errorMessage);
+            return syncDfd.reject(errorMessage);
           }
-        }
-        if ((options != null ? options.complete : void 0)) {
-          options.complete(resp);
-        }
+        });
+        resp.always(function(result) {
+          if ((options != null ? options.complete : void 0)) {
+            return options.complete(result);
+          }
+        });
         return syncDfd != null ? syncDfd.promise() : void 0;
       };
 
-      DbxDatastore.datastore = null;
+      DbxDatastore.datastore = Backbone.$.Deferred();
 
       return DbxDatastore;
 

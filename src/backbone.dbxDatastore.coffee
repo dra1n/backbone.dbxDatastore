@@ -5,32 +5,38 @@ do (
   factory = (_, Backbone) ->
     class Backbone.DbxDatastore
       constructor: (@tableName) ->
+        @datastoreDfr = Backbone.DbxDatastore.datastore
 
 
       create: (model) ->
-        record = @_getTable().insert model.toJSON()
-        model.id = record.getId()
-        model.set(model.idAttribute, model.id)
-        @find(model)
+        @_withDatastore (datastore) =>
+          record = @_getTable(datastore).insert model.toJSON()
+          model.id = record.getId()
+          model.set(model.idAttribute, model.id)
+          @jsonData(@_getRecord(datastore, model))
 
 
       update: (model) ->
-        @_getRecord(model).update(model.toJSON())
-        @find(model)
+        @_withDatastore (datastore) =>
+          @_getRecord(datastore, model).update(model.toJSON())
+          @jsonData(@_getRecord(datastore, model))
 
 
       find: (model) ->
-        @jsonData(@_getRecord(model))
+        @_withDatastore (datastore) =>
+          @jsonData(@_getRecord(datastore, model))
 
 
       findAll: ->
-        _(@_getTable().query()).map (r) => @jsonData(r)
+        @_withDatastore (datastore) =>
+          _(@_getTable(datastore).query()).map (r) => @jsonData(r)
 
 
       destroy: (model) ->
-        return false if model.isNew()
-        @_getRecord(model).deleteRecord()
-        model
+        return false if model.isNew() # no promise?
+        @_withDatastore (datastore) =>
+          @_getRecord(datastore, model).deleteRecord()
+          model
 
 
       jsonData: (record) ->
@@ -40,16 +46,19 @@ do (
         data
 
 
-      _getRecord: (model) ->
-        @_getTable().get(model.id)
+      _withDatastore: (action) ->
+        @datastoreDfr.then action
 
 
-      _getTable: ->
-        @_table or= Backbone.DbxDatastore.datastore.getTable(@tableName)
+      _getRecord: (datastore, model) ->
+        @_getTable(datastore).get(model.id)
+
+
+      _getTable: (datastore) ->
+        @_table or= datastore.getTable(@tableName)
 
 
       @sync: (method, model, options) ->
-        datastore = Backbone.DbxDatastore.datastore
         store = model.dbxDatastore || model.collection.DbxDatastore
         syncDfd = Backbone.$.Deferred && Backbone.$.Deferred()
 
@@ -67,15 +76,16 @@ do (
         catch error
           errorMessage = error.message
 
-        if resp?
+        resp.done (result) ->
           if (options?.success)
             if Backbone.VERSION is '0.9.10'
-              options.success(model, resp, options)
+              options.success(model, result, options)
             else
-              options.success(resp)
+              options.success(result)
 
-          if syncDfd? then syncDfd.resolve(resp)
-        else
+          if syncDfd? then syncDfd.resolve(result)
+
+        resp.fail ->
           errorMessage = if errorMessage? then errorMessage else 'Record Not Found'
 
           if options?.error
@@ -85,12 +95,13 @@ do (
               options.error(errorMessage)
           if syncDfd? then syncDfd.reject(errorMessage)
 
-        if (options?.complete) then options.complete(resp)
+        resp.always (result) ->
+          if (options?.complete) then options.complete(result)
 
         syncDfd?.promise()
 
 
-      @datastore: null
+      @datastore: Backbone.$.Deferred()
 
     Backbone.ajaxSync = Backbone.sync
 

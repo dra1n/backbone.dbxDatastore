@@ -32,8 +32,8 @@ if (client.isAuthenticated()) {
           alert('Error opening default datastore: ' + error);
       }
 
-      // Now you have a datastore. Save it
-      Backbone.DbxDatastore.datastore = datastore;
+      // Now you have a datastore. Time to resolve deferred object
+      Backbone.DbxDatastore.datastore.resolve(datastore);
   });
 }
 ```

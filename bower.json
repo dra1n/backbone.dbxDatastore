@@ -2,7 +2,7 @@
   "name": "backbone.dbxDatastore",
   "description": "Dropbox Datastore API adapter for Backbone.js",
   "main": "dist/backbone.dbxDatastore.js",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "dependencies": {}
 }
 

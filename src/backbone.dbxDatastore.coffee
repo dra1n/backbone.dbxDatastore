@@ -41,7 +41,7 @@ do (
 
       jsonData: (record) ->
         if record?
-          data = record.getFields()
+          data = @_convertList(record.getFields())
           data.id = record.getId()          # *idAttribute* is hardcoded to *id*
         data
 
@@ -56,6 +56,12 @@ do (
 
       _getTable: (datastore) ->
         @_table or= datastore.getTable(@tableName)
+
+
+      _convertList: (data) ->
+        _(data).each (v, k) ->
+          data[k] = v.toArray() if v instanceof Dropbox.Datastore.List
+        data
 
 
       @sync: (method, model, options) ->

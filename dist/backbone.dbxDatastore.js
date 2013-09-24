@@ -69,7 +69,7 @@
       DbxDatastore.prototype.jsonData = function(record) {
         var data;
         if (record != null) {
-          data = record.getFields();
+          data = this._convertList(record.getFields());
           data.id = record.getId();
         }
         return data;
@@ -85,6 +85,15 @@
 
       DbxDatastore.prototype._getTable = function(datastore) {
         return this._table || (this._table = datastore.getTable(this.tableName));
+      };
+
+      DbxDatastore.prototype._convertList = function(data) {
+        _(data).each(function(v, k) {
+          if (v instanceof Dropbox.Datastore.List) {
+            return data[k] = v.toArray();
+          }
+        });
+        return data;
       };
 
       DbxDatastore.sync = function(method, model, options) {

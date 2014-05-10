@@ -27,9 +27,9 @@ do (
           @jsonData(@_getRecord(datastore, model))
 
 
-      findAll: ->
+      findAll: (options={})->
         @_withDatastore (datastore) =>
-          _(@_getTable(datastore).query()).map (r) => @jsonData(r)
+          _(@_getTable(datastore).query(options)).map (r) => @jsonData(r)
 
 
       destroy: (model) ->
@@ -71,7 +71,7 @@ do (
         try
           switch method
             when 'read'
-              resp = if model.id? then store.find(model) else store.findAll()
+              resp = if model.id? then store.find(model) else store.findAll(options.data)
             when 'create'
               resp = store.create(model)
             when 'update'

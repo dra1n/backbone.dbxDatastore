@@ -21,49 +21,57 @@
       }
 
       DbxDatastore.prototype.create = function(model) {
-        var _this = this;
-        return this._withDatastore(function(datastore) {
-          var record;
-          record = _this._getTable(datastore).insert(model.toJSON());
-          model.id = record.getId();
-          model.set(model.idAttribute, model.id);
-          return _this.jsonData(_this._getRecord(datastore, model));
-        });
+        return this._withDatastore((function(_this) {
+          return function(datastore) {
+            var record;
+            record = _this._getTable(datastore).insert(model.toJSON());
+            model.id = record.getId();
+            model.set(model.idAttribute, model.id);
+            return _this.jsonData(_this._getRecord(datastore, model));
+          };
+        })(this));
       };
 
       DbxDatastore.prototype.update = function(model) {
-        var _this = this;
-        return this._withDatastore(function(datastore) {
-          _this._getRecord(datastore, model).update(model.toJSON());
-          return _this.jsonData(_this._getRecord(datastore, model));
-        });
+        return this._withDatastore((function(_this) {
+          return function(datastore) {
+            _this._getRecord(datastore, model).update(model.toJSON());
+            return _this.jsonData(_this._getRecord(datastore, model));
+          };
+        })(this));
       };
 
       DbxDatastore.prototype.find = function(model) {
-        var _this = this;
-        return this._withDatastore(function(datastore) {
-          return _this.jsonData(_this._getRecord(datastore, model));
-        });
+        return this._withDatastore((function(_this) {
+          return function(datastore) {
+            return _this.jsonData(_this._getRecord(datastore, model));
+          };
+        })(this));
       };
 
-      DbxDatastore.prototype.findAll = function() {
-        var _this = this;
-        return this._withDatastore(function(datastore) {
-          return _(_this._getTable(datastore).query()).map(function(r) {
-            return _this.jsonData(r);
-          });
-        });
+      DbxDatastore.prototype.findAll = function(options) {
+        if (options == null) {
+          options = {};
+        }
+        return this._withDatastore((function(_this) {
+          return function(datastore) {
+            return _(_this._getTable(datastore).query(options)).map(function(r) {
+              return _this.jsonData(r);
+            });
+          };
+        })(this));
       };
 
       DbxDatastore.prototype.destroy = function(model) {
-        var _this = this;
         if (model.isNew()) {
           return false;
         }
-        return this._withDatastore(function(datastore) {
-          _this._getRecord(datastore, model).deleteRecord();
-          return model;
-        });
+        return this._withDatastore((function(_this) {
+          return function(datastore) {
+            _this._getRecord(datastore, model).deleteRecord();
+            return model;
+          };
+        })(this));
       };
 
       DbxDatastore.prototype.jsonData = function(record) {
@@ -103,7 +111,7 @@
         try {
           switch (method) {
             case 'read':
-              resp = model.id != null ? store.find(model) : store.findAll();
+              resp = model.id != null ? store.find(model) : store.findAll(options.data);
               break;
             case 'create':
               resp = store.create(model);
